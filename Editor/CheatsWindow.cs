@@ -41,7 +41,8 @@ namespace Ji2.Cheats.Editor
                 _search = GUILayout.TextField(_search, EditorStyles.toolbarSearchField);
                 if (GUILayout.Button("Clear", EditorStyles.toolbarButton, GUILayout.Width(48))) _search = string.Empty;
             }
-            EditorGUILayout.LabelField(VisibleCommandCount + " commands", EditorStyles.miniLabel);
+            int count = VisibleCommandCount;
+            EditorGUILayout.LabelField(count + (count == 1 ? " command" : " commands"), EditorStyles.miniLabel);
             _scroll = EditorGUILayout.BeginScrollView(_scroll);
             var providers = CheatRegistry.Shared.Providers;
             if (providers.Count == 0)
