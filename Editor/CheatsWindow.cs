@@ -24,7 +24,7 @@ namespace Ji2.Cheats.Editor
             CheatRegistry.Shared.Changed -= Repaint;
             EditorApplication.playModeStateChanged -= PlayModeChanged;
         }
-        private void PlayModeChanged(PlayModeStateChange state) => Repaint();
+        private void PlayModeChanged(PlayModeStateChange state) { _message = null; Repaint(); }
         private void OnInspectorUpdate() => Repaint();
         public void SetSearch(string query) { _search = query ?? string.Empty; Repaint(); }
         public int VisibleCommandCount => CheatRegistry.Shared.Providers.Sum(p => p.Commands.Count(Matches));
