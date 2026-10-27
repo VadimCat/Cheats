@@ -50,15 +50,12 @@ namespace Ji2.Cheats.Editor
             {
                 EditorGUILayout.LabelField(provider.DisplayName, EditorStyles.boldLabel);
                 EditorGUILayout.HelpBox(provider.Context, MessageType.None);
-                string category = null;
-                foreach (var command in provider.Commands.Where(Matches))
+                foreach (var group in provider.Commands.Where(Matches).GroupBy(c => c.Category))
                 {
-                    if (command.Category != category)
+                    EditorGUILayout.Space(5);
+                    EditorGUILayout.LabelField(group.Key, EditorStyles.miniBoldLabel);
+                    foreach (var command in group)
                     {
-                        category = command.Category;
-                        EditorGUILayout.Space(5);
-                        EditorGUILayout.LabelField(category, EditorStyles.miniBoldLabel);
-                    }
                     var state = CheatRegistry.Shared.GetState(provider.Id, command.Id);
                     using (new EditorGUILayout.VerticalScope(EditorStyles.helpBox))
                     {
@@ -78,6 +75,7 @@ namespace Ji2.Cheats.Editor
                                 }
                         }
                         if (!state.Enabled) EditorGUILayout.LabelField(state.DisabledReason, EditorStyles.wordWrappedMiniLabel);
+                    }
                     }
                 }
             }
