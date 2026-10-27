@@ -1,0 +1,8 @@
+{
+  "name": "com.ji2.cheats",
+  "version": "1.0.0",
+  "displayName": "JI2 Cheats",
+  "description": "Shared cheat command registry, lifecycle and searchable Editor window with game-owned adapters.",
+  "unity": "2022.3",
+  "author": { "name": "MauGames" }
+}

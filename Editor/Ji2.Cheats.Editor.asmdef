@@ -1,0 +1,6 @@
+{
+  "name": "Ji2.Cheats.Editor",
+  "rootNamespace": "Ji2.Cheats.Editor",
+  "references": ["Ji2.Cheats"],
+  "includePlatforms": ["Editor"]
+}
