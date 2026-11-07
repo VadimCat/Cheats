@@ -34,7 +34,25 @@ liveLease.Dispose();
 Check(registry.Find("game") == replacement, "Old lease cannot unregister a replacement context");
 replacementLease.Dispose(); fallbackLease.Dispose();
 Check(registry.Providers.Count == 0, "All providers released cleanly");
-Console.WriteLine($"PASS: {passed} reusable cheat registry checks; no Unity loaded.");
+var target = new LevelTarget();
+var levels = new LevelCheats("levels", "Levels", target);
+Throws<ArgumentException>(() => new LevelCheats("", "x", target), "Level provider requires an ID");
+Throws<ArgumentNullException>(() => new LevelCheats("levels", "x", null), "Level provider requires a target");
+using (var levelLease = registry.Register(levels))
+{
+    Check(!registry.Execute("levels", LevelCheats.Win).Success && target.Wins == 0, "Win needs a level in progress");
+    target.Playing = true;
+    Check(registry.Execute("levels", LevelCheats.Win).Success && target.Wins == 1, "Win reaches the game");
+    Check(registry.Execute("levels", LevelCheats.Lose).Success && target.Losses == 1, "Lose reaches the game");
+    Check(registry.Execute("levels", LevelCheats.Restart).Success && target.Restarts == 1, "Restart reaches the game");
+    Check(!registry.Execute("levels", LevelCheats.Next).Success && target.Index == 0, "Navigation waits for CanChangeLevel");
+    target.CanChange = true;
+    Check(registry.Execute("levels", LevelCheats.Previous).Success && target.Index == 2, "Previous wraps to the last level");
+    Check(registry.Execute("levels", LevelCheats.Next).Success && target.Index == 0, "Next wraps to the first level");
+    target.Count = 1;
+    Check(!registry.GetState("levels", LevelCheats.Next).Enabled, "A single level cannot switch");
+}
+Console.WriteLine($"PASS: {passed} reusable cheat registry and level command checks; no Unity loaded.");
 
 sealed class Provider : ICheatProvider
 {
@@ -49,4 +67,18 @@ sealed class Provider : ICheatProvider
     public CheatState GetState(string id) => ThrowOnState ? throw new InvalidOperationException("state failed") : Enabled ? CheatState.Ready() : CheatState.Disabled("not ready");
     public CheatResult Execute(string id)
     { if (ThrowOnExecute) throw new InvalidOperationException("execution failed"); Executions++; return CheatResult.Completed("done"); }
+}
+
+sealed class LevelTarget : ILevelCheatTarget
+{
+    public int Index, Count = 3, Wins, Losses, Restarts;
+    public bool Playing, CanChange;
+    public int LevelIndex => Index;
+    public int LevelCount => Count;
+    public bool LevelInProgress => Playing;
+    public bool CanChangeLevel => CanChange;
+    public void WinLevel() => Wins++;
+    public void LoseLevel() => Losses++;
+    public void RestartLevel() => Restarts++;
+    public void OpenLevel(int index) => Index = index;
 }

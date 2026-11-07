@@ -1,0 +1,5 @@
+{
+  "name": "Ji2.Cheats.Panel",
+  "rootNamespace": "Ji2.Cheats.Panel",
+  "references": ["Ji2.Cheats", "UnityEngine.UI"]
+}
