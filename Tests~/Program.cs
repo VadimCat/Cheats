@@ -52,6 +52,26 @@ using (var levelLease = registry.Register(levels))
     target.Count = 1;
     Check(!registry.GetState("levels", LevelCheats.Next).Enabled, "A single level cannot switch");
 }
+var store = new SettingsStore();
+CheatEntrance.Store = store;
+int entranceChanges = 0, sharedChanges = 0;
+CheatEntrance.Changed += () => entranceChanges++;
+CheatRegistry.Shared.Changed += () => sharedChanges++;
+Check(CheatRegistry.Shared.Providers.Count == 1 && CheatRegistry.Shared.Providers[0].Id == CheatEntrance.ProviderId, "Shared registry always holds the built-in entrance provider");
+Check(!CheatEntrance.Hidden && CheatRegistry.Shared.GetState(CheatEntrance.ProviderId, CheatEntrance.HideCommandId).ActionLabel == "OFF", "Entrance starts visible");
+using (var game = CheatRegistry.Shared.Register(new Provider("AAA", true)))
+{
+    var shared = CheatRegistry.Shared.Providers;
+    Check(shared.Count == 2 && shared[0].Id == CheatEntrance.ProviderId && shared[1].Id == "AAA", "Built-in provider stays first even before an earlier-sorting game ID");
+    Check(CheatRegistry.Shared.Execute(CheatEntrance.ProviderId, CheatEntrance.HideCommandId).Success && CheatEntrance.Hidden
+        && store.Values[CheatEntrance.StorageKey] && entranceChanges == 1 && sharedChanges >= 1, "Toggling hides the entrance, persists it and notifies observers");
+    Check(CheatRegistry.Shared.GetState(CheatEntrance.ProviderId, CheatEntrance.HideCommandId).ActionLabel == "ON", "Command state shows the hidden entrance");
+}
+CheatEntrance.Store = new SettingsStore();
+Check(!CheatEntrance.Hidden, "A new store supplies its own persisted value");
+CheatEntrance.Store = store;
+Check(CheatEntrance.Hidden && CheatRegistry.Shared.Execute(CheatEntrance.ProviderId, CheatEntrance.HideCommandId).Success && !CheatEntrance.Hidden, "Toggling again shows the entrance");
+Check(!CheatRegistry.Shared.Execute(CheatEntrance.ProviderId, "missing").Success, "Unknown built-in command never executes");
 Console.WriteLine($"PASS: {passed} reusable cheat registry and level command checks; no Unity loaded.");
 
 sealed class Provider : ICheatProvider
@@ -67,6 +87,13 @@ sealed class Provider : ICheatProvider
     public CheatState GetState(string id) => ThrowOnState ? throw new InvalidOperationException("state failed") : Enabled ? CheatState.Ready() : CheatState.Disabled("not ready");
     public CheatResult Execute(string id)
     { if (ThrowOnExecute) throw new InvalidOperationException("execution failed"); Executions++; return CheatResult.Completed("done"); }
+}
+
+sealed class SettingsStore : ICheatSettingsStore
+{
+    public readonly Dictionary<string, bool> Values = new();
+    public bool GetBool(string key, bool fallback) => Values.TryGetValue(key, out var value) ? value : fallback;
+    public void SetBool(string key, bool value) => Values[key] = value;
 }
 
 sealed class LevelTarget : ILevelCheatTarget

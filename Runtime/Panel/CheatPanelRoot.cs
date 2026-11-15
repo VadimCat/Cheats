@@ -28,6 +28,7 @@ namespace Ji2.Cheats.Panel
         private readonly List<Row> _rows = new List<Row>();
         private Font _font;
         private GameObject _launcher;
+        private CanvasGroup _launcherGroup;
         private GameObject _panel;
         private RectTransform _content;
         private Text _feedback;
@@ -55,6 +56,9 @@ namespace Ji2.Cheats.Panel
             Label(launcher, "DEV", 30, Ink, FontStyle.Bold, TextAnchor.MiddleCenter, true);
             launcher.gameObject.AddComponent<Button>().onClick.AddListener(() => SetOpen(true));
             _launcher = launcher.gameObject;
+            _launcherGroup = _launcher.AddComponent<CanvasGroup>();
+            ApplyEntrance();
+            CheatEntrance.Changed += ApplyEntrance;
 
             var dim = Box("Panel", transform, new Color(0, 0, 0, 0.55f));
             Stretch(dim, Vector2.zero, Vector2.zero);
@@ -146,8 +150,12 @@ namespace Ji2.Cheats.Panel
         private void OnDestroy()
         {
             CheatRegistry.Shared.Changed -= MarkDirty;
+            CheatEntrance.Changed -= ApplyEntrance;
             CheatPanel.Forget(this);
         }
+
+        // An invisible launcher still receives taps where it was.
+        private void ApplyEntrance() => _launcherGroup.alpha = CheatEntrance.Hidden ? 0f : 1f;
 
         private void MarkDirty() => _dirty = true;
 

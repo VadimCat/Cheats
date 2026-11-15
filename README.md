@@ -34,11 +34,25 @@ CheatPanel.Install();                       // DEV launcher at the left edge; In
 
 The panel is a code-built Screen Space Overlay canvas (sorting order 32000, 1080×1920 reference, legacy built-in font, no game assets). It lists every registered provider grouped by category, shows each command's live state and disabled reason, and reports the last result. It needs the scene's `EventSystem`. `CheatPanel.Open/Close/Toggle` let a game add its own entrance (for example a hotkey). Pause gameplay input through `OpenChanged`; with `CloseOnExecute` the panel closes (and raises `OpenChanged(false)`) before the command runs, so a game's input restore cannot override what the command changes.
 
+## Invisible cheats button (built in)
+
+Every consumer gets the "Invisible cheats button" command (provider `Ji2.Cheats`, command `HideEntrance`) as the first entry of `CheatRegistry.Shared`. It toggles `CheatEntrance.Hidden`, which is persisted in PlayerPrefs (`Ji2.Cheats.EntranceHidden`) through `PlayerPrefsCheatStore`. While it is set, a cheat entrance draws nothing but stays where it was and keeps receiving taps, so videos and screenshots from development builds look like the shipped game and the cheats are still one tap away; toggling the command again shows the entrance.
+
+The runtime panel's DEV launcher follows it automatically. A game with its own entrance button applies it the same way:
+
+```csharp
+void OnEnable() { CheatEntrance.Changed += Apply; Apply(); }
+void OnDisable() => CheatEntrance.Changed -= Apply;
+void Apply() => GetComponent<CanvasGroup>().alpha = CheatEntrance.Hidden ? 0f : 1f; // keep raycasts on
+```
+
+A game that draws its own cheat list should show the built-in provider's commands first (`CheatRegistry.Shared.Find(CheatEntrance.ProviderId)`) and dispatch them through `CheatRegistry.Shared.Execute`.
+
 ## Integration
 
 Reference `Ji2.Cheats` (and `Ji2.Cheats.Panel` for the runtime panel) from the game's runtime assembly and `Ji2.Cheats.Editor` from its Editor adapter. Keep release-player feature gates in the game adapter and hide the runtime entrance outside Editor/development builds. The generic registry is not an authorization boundary.
 
-Use an exact release tag/commit for UPM Git installation or an exact Git submodule commit. Never track a floating development branch in a shipping game. PushColorMerge uses `Packages/com.ji2.cheats` as a pinned submodule; its authored CheatCatalog and CheatService remain game-owned. Ring Twist uses `LevelCheats` and `CheatPanel` with a small adapter.
+Use an exact release tag/commit for UPM Git installation or an exact Git submodule commit. Never track a floating development branch in a shipping game. PushColorMerge pins the UPM Git URL to an exact commit; its authored CheatCatalog and CheatService remain game-owned. Ring Twist uses `LevelCheats` and `CheatPanel` with a small adapter.
 
 ## Validation
 

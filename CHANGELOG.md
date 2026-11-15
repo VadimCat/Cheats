@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.2.0 — 2026-11-15
+
+- Add the built-in `CheatEntrance` switch and its "Invisible cheats button" command (`Ji2.Cheats` / `HideEntrance`). It is always registered first in `CheatRegistry.Shared`, so every consumer's Editor window and runtime panel show it without game code.
+- `ICheatSettingsStore` persists shared settings; `Ji2.Cheats.Panel` installs `PlayerPrefsCheatStore` in Edit Mode and before the first scene loads.
+- The runtime panel's DEV launcher becomes fully transparent while the entrance is hidden but still opens the panel on tap.
+
 ## 1.1.0 — 2026-11-07
 
 - Add `LevelCheats` and `ILevelCheatTarget`: shared win, lose, restart, previous and next level commands with stable IDs.
