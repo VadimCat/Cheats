@@ -19,10 +19,20 @@ namespace Ji2.Cheats
             { var owner = _owner; _owner = null; owner?.Remove(_provider, _fallback); }
         }
         private readonly Dictionary<string, Slot> _slots = new Dictionary<string, Slot>(StringComparer.Ordinal);
-        public static CheatRegistry Shared { get; } = new CheatRegistry();
+        /// <summary>The process-wide registry. It always contains the built-in <see cref="CheatEntrance"/> provider.</summary>
+        public static CheatRegistry Shared { get; } = CreateShared();
         public event Action Changed;
+        /// <summary>The built-in provider first, then the others by ID.</summary>
         public IReadOnlyList<ICheatProvider> Providers => _slots.Values.Select(s => s.Primary ?? s.Fallback)
-            .OrderBy(p => p.Id, StringComparer.Ordinal).ToArray();
+            .OrderBy(p => p.Id == CheatEntrance.ProviderId ? 0 : 1).ThenBy(p => p.Id, StringComparer.Ordinal).ToArray();
+
+        private static CheatRegistry CreateShared()
+        {
+            var registry = new CheatRegistry();
+            registry.Register(new CheatEntranceProvider());
+            CheatEntrance.Changed += () => registry.Changed?.Invoke();
+            return registry;
+        }
         public ICheatProvider Find(string id) => _slots.TryGetValue(id, out var slot) ? slot.Primary ?? slot.Fallback : null;
 
         public IDisposable Register(ICheatProvider provider, bool fallback = false)
